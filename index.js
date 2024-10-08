@@ -3,8 +3,6 @@ const { App } = pkg;
 import express from 'express';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
-import commands from './routes/commands.js'; // Import command routes
-import events from './routes/events.js';     // Import event routes
 
 dotenv.config();
 
@@ -22,8 +20,8 @@ mongoose.connect(process.env.MONGO_URI)
 // Command Handlers
 
 // Create a new project
-app.command('/createproject', async ({ command, ack, respond }) => {
-  await ack();
+app.command('/slack/commands/createproject', async ({ command, ack, respond }) => {
+  await ack(); // Acknowledge the command
   const projectName = command.text.trim();
 
   if (!projectName) {
@@ -37,7 +35,7 @@ app.command('/createproject', async ({ command, ack, respond }) => {
 
 // Add a task to a project
 app.command('/addtask', async ({ command, ack, respond }) => {
-  await ack();
+  await ack(); // Acknowledge the command
   const args = command.text.split(',');
 
   if (args.length < 4) {
@@ -52,7 +50,7 @@ app.command('/addtask', async ({ command, ack, respond }) => {
 
 // Set a budget for a project
 app.command('/budget', async ({ command, ack, respond }) => {
-  await ack();
+  await ack(); // Acknowledge the command
   const args = command.text.split(',');
 
   if (args.length < 2) {
@@ -67,7 +65,7 @@ app.command('/budget', async ({ command, ack, respond }) => {
 
 // Get project details
 app.command('/getproject', async ({ command, ack, respond }) => {
-  await ack();
+  await ack(); // Acknowledge the command
   const projectName = command.text.trim();
 
   if (!projectName) {
@@ -81,7 +79,7 @@ app.command('/getproject', async ({ command, ack, respond }) => {
 
 // List all projects
 app.command('/listprojects', async ({ command, ack, respond }) => {
-  await ack();
+  await ack(); // Acknowledge the command
 
   // Logic to list all projects from your database here
   const projects = ['Project A', 'Project B', 'Project C']; // Example data
@@ -90,7 +88,7 @@ app.command('/listprojects', async ({ command, ack, respond }) => {
 
 // Update task status
 app.command('/updatetask', async ({ command, ack, respond }) => {
-  await ack();
+  await ack(); // Acknowledge the command
   const args = command.text.split(',');
 
   if (args.length < 3) {
@@ -105,7 +103,7 @@ app.command('/updatetask', async ({ command, ack, respond }) => {
 
 // Delete a project
 app.command('/deleteproject', async ({ command, ack, respond }) => {
-  await ack();
+  await ack(); // Acknowledge the command
   const projectName = command.text.trim();
 
   if (!projectName) {
@@ -119,7 +117,7 @@ app.command('/deleteproject', async ({ command, ack, respond }) => {
 
 // Set cash in for a project
 app.command('/cashin', async ({ command, ack, respond }) => {
-  await ack();
+  await ack(); // Acknowledge the command
   const args = command.text.split(',');
 
   if (args.length < 2) {
@@ -134,7 +132,7 @@ app.command('/cashin', async ({ command, ack, respond }) => {
 
 // Set cash out for a project
 app.command('/cashout', async ({ command, ack, respond }) => {
-  await ack();
+  await ack(); // Acknowledge the command
   const args = command.text.split(',');
 
   if (args.length < 2) {
@@ -147,9 +145,10 @@ app.command('/cashout', async ({ command, ack, respond }) => {
   await respond(`Cash out of "${amount}" recorded for project "${projectName}".`);
 });
 
-// Setup routes for events and commands if needed
-commands(app);
-events(app);
+// Catch all unhandled requests
+app.error(async (error) => {
+  console.error(`Error occurred: ${error}`);
+});
 
 // Start server
 (async () => {
