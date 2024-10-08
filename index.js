@@ -154,14 +154,14 @@ slackApp.command('/cashout', async ({ command, ack, respond }) => {
 // Express Routes
 
 // GET route to retrieve all projects
-expressApp.get('/projects', async (req, res) => {
+expressApp.get('/', async (req, res) => {
   // Logic to retrieve all projects from the database here
   const projects = ['Project A', 'Project B', 'Project C']; // Example data
   res.json({ projects });
 });
 
 // POST route to create a new project
-expressApp.post('/projects', async (req, res) => {
+expressApp.post('/createproject', async (req, res) => {
   const { projectName } = req.body;
 
   if (!projectName) {
