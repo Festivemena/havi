@@ -23,6 +23,11 @@ const expressApp = express();
 expressApp.use(express.json());
 expressApp.use(express.urlencoded({ extended: true }));
 
+// Root route handler
+expressApp.get('/', (req, res) => {
+  res.send('Welcome to the Project Management Slack Bot API');
+});
+
 // Slack Command Handlers
 
 // Create a new project
@@ -154,14 +159,14 @@ slackApp.command('/cashout', async ({ command, ack, respond }) => {
 // Express Routes
 
 // GET route to retrieve all projects
-expressApp.get('/', async (req, res) => {
+expressApp.get('/projects', async (req, res) => {
   // Logic to retrieve all projects from the database here
   const projects = ['Project A', 'Project B', 'Project C']; // Example data
   res.json({ projects });
 });
 
 // POST route to create a new project
-expressApp.post('/createproject', async (req, res) => {
+expressApp.post('/projects', async (req, res) => {
   const { projectName } = req.body;
 
   if (!projectName) {
