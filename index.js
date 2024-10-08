@@ -7,20 +7,26 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 // Initialize Bolt Slack app
-const app = new App({
+const slackApp = new App({
   token: process.env.SLACK_BOT_TOKEN,
-  signingSecret: process.env.SLACK_SIGNING_SECRET
+  signingSecret: process.env.SLACK_SIGNING_SECRET,
 });
 
 // Connect to MongoDB
-mongoose.connect(process.env.MONGO_URI)
+mongoose
+  .connect(process.env.MONGO_URI)
   .then(() => console.log('Connected to MongoDB'))
-  .catch(err => console.error('Error connecting to MongoDB:', err));
+  .catch((err) => console.error('Error connecting to MongoDB:', err));
 
-// Command Handlers
+// Initialize Express app
+const expressApp = express();
+expressApp.use(express.json());
+expressApp.use(express.urlencoded({ extended: true }));
+
+// Slack Command Handlers
 
 // Create a new project
-app.command('/slack/commands/createproject', async ({ command, ack, respond }) => {
+slackApp.command('/createproject', async ({ command, ack, respond }) => {
   await ack(); // Acknowledge the command
   const projectName = command.text.trim();
 
@@ -34,7 +40,7 @@ app.command('/slack/commands/createproject', async ({ command, ack, respond }) =
 });
 
 // Add a task to a project
-app.command('/addtask', async ({ command, ack, respond }) => {
+slackApp.command('/addtask', async ({ command, ack, respond }) => {
   await ack(); // Acknowledge the command
   const args = command.text.split(',');
 
@@ -43,13 +49,13 @@ app.command('/addtask', async ({ command, ack, respond }) => {
     return;
   }
 
-  const [projectName, taskName, assignedTo, deadline] = args.map(arg => arg.trim());
+  const [projectName, taskName, assignedTo, deadline] = args.map((arg) => arg.trim());
   // Logic to add the task to the specified project here
   await respond(`Task "${taskName}" added to project "${projectName}" and assigned to "${assignedTo}". Deadline: "${deadline}".`);
 });
 
 // Set a budget for a project
-app.command('/budget', async ({ command, ack, respond }) => {
+slackApp.command('/budget', async ({ command, ack, respond }) => {
   await ack(); // Acknowledge the command
   const args = command.text.split(',');
 
@@ -58,13 +64,13 @@ app.command('/budget', async ({ command, ack, respond }) => {
     return;
   }
 
-  const [projectName, budgetAmount] = args.map(arg => arg.trim());
+  const [projectName, budgetAmount] = args.map((arg) => arg.trim());
   // Logic to set the budget for the project here
   await respond(`Budget of "${budgetAmount}" set for project "${projectName}".`);
 });
 
 // Get project details
-app.command('/getproject', async ({ command, ack, respond }) => {
+slackApp.command('/getproject', async ({ command, ack, respond }) => {
   await ack(); // Acknowledge the command
   const projectName = command.text.trim();
 
@@ -78,7 +84,7 @@ app.command('/getproject', async ({ command, ack, respond }) => {
 });
 
 // List all projects
-app.command('/listprojects', async ({ command, ack, respond }) => {
+slackApp.command('/listprojects', async ({ command, ack, respond }) => {
   await ack(); // Acknowledge the command
 
   // Logic to list all projects from your database here
@@ -87,7 +93,7 @@ app.command('/listprojects', async ({ command, ack, respond }) => {
 });
 
 // Update task status
-app.command('/updatetask', async ({ command, ack, respond }) => {
+slackApp.command('/updatetask', async ({ command, ack, respond }) => {
   await ack(); // Acknowledge the command
   const args = command.text.split(',');
 
@@ -96,13 +102,13 @@ app.command('/updatetask', async ({ command, ack, respond }) => {
     return;
   }
 
-  const [taskName, projectName, status] = args.map(arg => arg.trim());
+  const [taskName, projectName, status] = args.map((arg) => arg.trim());
   // Logic to update the task status in your database here
   await respond(`Task "${taskName}" in project "${projectName}" updated to status "${status}".`);
 });
 
 // Delete a project
-app.command('/deleteproject', async ({ command, ack, respond }) => {
+slackApp.command('/deleteproject', async ({ command, ack, respond }) => {
   await ack(); // Acknowledge the command
   const projectName = command.text.trim();
 
@@ -116,7 +122,7 @@ app.command('/deleteproject', async ({ command, ack, respond }) => {
 });
 
 // Set cash in for a project
-app.command('/cashin', async ({ command, ack, respond }) => {
+slackApp.command('/cashin', async ({ command, ack, respond }) => {
   await ack(); // Acknowledge the command
   const args = command.text.split(',');
 
@@ -125,13 +131,13 @@ app.command('/cashin', async ({ command, ack, respond }) => {
     return;
   }
 
-  const [projectName, amount] = args.map(arg => arg.trim());
+  const [projectName, amount] = args.map((arg) => arg.trim());
   // Logic to record cash in for the project here
   await respond(`Cash in of "${amount}" recorded for project "${projectName}".`);
 });
 
 // Set cash out for a project
-app.command('/cashout', async ({ command, ack, respond }) => {
+slackApp.command('/cashout', async ({ command, ack, respond }) => {
   await ack(); // Acknowledge the command
   const args = command.text.split(',');
 
@@ -140,18 +146,41 @@ app.command('/cashout', async ({ command, ack, respond }) => {
     return;
   }
 
-  const [projectName, amount] = args.map(arg => arg.trim());
+  const [projectName, amount] = args.map((arg) => arg.trim());
   // Logic to record cash out for the project here
   await respond(`Cash out of "${amount}" recorded for project "${projectName}".`);
 });
 
+// Express Routes
+
+// GET route to retrieve all projects
+expressApp.get('/projects', async (req, res) => {
+  // Logic to retrieve all projects from the database here
+  const projects = ['Project A', 'Project B', 'Project C']; // Example data
+  res.json({ projects });
+});
+
+// POST route to create a new project
+expressApp.post('/projects', async (req, res) => {
+  const { projectName } = req.body;
+
+  if (!projectName) {
+    return res.status(400).json({ error: 'Project name is required.' });
+  }
+
+  // Logic to save the project in your database here
+  res.status(201).json({ message: `Project "${projectName}" created successfully.` });
+});
+
 // Catch all unhandled requests
-app.error(async (error) => {
+slackApp.error(async (error) => {
   console.error(`Error occurred: ${error}`);
 });
 
 // Start server
 (async () => {
-  await app.start(process.env.PORT || 3000);
-  console.log(`Havi bot is running on port ${process.env.PORT || 3000}`);
+  await slackApp.start(process.env.PORT || 3000);
+  expressApp.listen(process.env.EXPRESS_PORT || 4000, () => {
+    console.log(`Express server is running on port ${process.env.EXPRESS_PORT || 4000}`);
+  });
 })();
